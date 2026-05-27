@@ -13,4 +13,5 @@ public class Motherboard extends Component {
     private String socket;
     private String ramType;
     private String chipset;
+    private String formFactor; // ATX, Micro-ATX, Mini-ITX
 }

@@ -24,17 +24,15 @@ const TYPE_TO_KEY = {
 }
 
 export function useBuild() {
-  // selected: { CPU: { id, name, type }, MOTHERBOARD: {...}, ... }
   const [selected, setSelected] = useState({})
   const [compatibility, setCompatibility] = useState({
     status: 'idle',
-    message: 'Соберите основу (CPU + M/B) для проверки совместимости.',
+    message: 'Выберите минимум 2 комплектующих для проверки совместимости.',
     errors: [],
   })
   const [buildName, setBuildName] = useState('')
   const [saveStatus, setSaveStatus] = useState('idle')
 
-  // Restore build from localStorage after login
   useEffect(() => {
     const raw = localStorage.getItem('pendingBuild')
     if (!raw) return
@@ -56,10 +54,10 @@ export function useBuild() {
       return acc
     }, {})
 
-    if (!payload.cpuId || !payload.motherboardId) {
+    if (Object.keys(newSelected).length < 2) {
       setCompatibility({
         status: 'idle',
-        message: 'Соберите основу (CPU + M/B) для проверки совместимости.',
+        message: 'Выберите минимум 2 комплектующих для проверки совместимости.',
         errors: [],
       })
       return
@@ -81,6 +79,13 @@ export function useBuild() {
 
   const addComponent = useCallback(
     (component) => {
+      const existing = selected[component.type]
+      if (existing && existing.id !== component.id) {
+        const ok = window.confirm(
+          `Заменить «${existing.name}»\nна «${component.name}»?`
+        )
+        if (!ok) return
+      }
       const newSelected = { ...selected, [component.type]: component }
       setSelected(newSelected)
       runCompatibilityCheck(newSelected)

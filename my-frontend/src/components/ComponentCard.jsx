@@ -20,6 +20,7 @@ function getSpecs(comp) {
       ]
     case 'MOTHERBOARD':
       return [
+        { label: 'Форм-фактор', value: comp.formFactor },
         { label: 'Сокет', value: comp.socket },
         { label: 'Чипсет', value: comp.chipset },
         { label: 'Тип памяти', value: comp.ramType },

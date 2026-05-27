@@ -16,20 +16,52 @@ const SLOTS = [
 function CompatibilityAlert({ compatibility }) {
   const { status, message, errors } = compatibility
 
-  const cls = {
-    idle: 'alert alert-secondary',
-    loading: 'alert alert-warning',
-    success: 'alert alert-success',
-    error: 'alert alert-danger',
-  }[status]
+  if (status === 'idle') {
+    return (
+      <div className="alert alert-secondary d-flex align-items-start gap-2 py-2 mb-0" role="alert">
+        <small className="text-muted">{message}</small>
+      </div>
+    )
+  }
 
-  return (
-    <div className={cls} role="alert">
-      {errors.length > 0
-        ? errors.map((e, i) => <div key={i}>{e}</div>)
-        : message}
-    </div>
-  )
+  if (status === 'loading') {
+    return (
+      <div className="alert alert-warning d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+        <div className="spinner-border spinner-border-sm text-warning" role="status" />
+        <small>{message}</small>
+      </div>
+    )
+  }
+
+  if (status === 'success') {
+    return (
+      <div className="alert alert-success d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+        <strong>Все детали совместимы!</strong>
+      </div>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="alert alert-danger py-2 mb-0" role="alert">
+        <div className="d-flex align-items-center gap-2 mb-2">
+          <strong>Обнаружены конфликты:</strong>
+        </div>
+        <ul className="list-unstyled mb-0 small">
+          {errors.length > 0
+            ? errors.map((e, i) => (
+                <li key={i} className="d-flex align-items-start gap-1 mb-1">
+                  <span className="text-danger fw-bold flex-shrink-0" style={{ lineHeight: 1.4 }}>✗</span>
+                  <span>{e}</span>
+                </li>
+              ))
+            : <li>{message}</li>}
+        </ul>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export default function BuildPanel({
