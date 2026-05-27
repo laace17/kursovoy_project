@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конфигуратор ПК | Сборка</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container d-flex justify-content-between">
+        <a class="navbar-brand mb-0 h1 text-decoration-none" href="/" style="color: white;"> PC Builder</a>
+        <div>
+            <a sec:authorize="isAnonymous()" class="btn btn-outline-info me-2" href="/register">Регистрация</a>
+            <a sec:authorize="isAnonymous()" class="btn btn-outline-light" href="/login">Войти</a>
+
+            <a sec:authorize="isAuthenticated()" class="btn btn-outline-light me-2" href="/builds">Мои сборки</a>
+            <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-danger">Выйти</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container" id="catalog-container">
+    <div class="row" id="catalog-section">
+
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Комплектующие</h3>
+                <select id="price-sort" class="form-select w-auto shadow-sm" onchange="sortCatalog()">
+                    <option value="none">Без сортировки</option>
+                    <option value="asc">Сначала дешевле</option>
+                    <option value="desc">Сначала дороже</option>
+                </select>
+            </div>
+
+            <ul class="nav nav-tabs mb-4 flex-nowrap overflow-auto" id="componentTabs" role="tablist" style="white-space: nowrap;">
+                <li class="nav-item" role="presentation"><button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#cpu" type="button" role="tab">Процессор</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#mobo" type="button" role="tab">Материнская плата</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#gpu" type="button" role="tab">Видеокарта</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#ram" type="button" role="tab">Оперативная память</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#cooler" type="button" role="tab">Охлаждение</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#storage" type="button" role="tab">Накопители</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#psu" type="button" role="tab">Блоки питания</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#case" type="button" role="tab">Корпус</button></li>
+            </ul>
+
+            <div class="tab-content" id="componentTabsContent">
+
+                <div class="tab-pane fade show active" id="cpu" role="tabpanel">
+                    <div class="d-flex justify-content-end mb-3 mt-2">
+                        <select class="form-select w-auto shadow-sm" onchange="filterComponents('cpu', 'data-socket', this.value)">
+                            <option value="all">Все сокеты</option>
+                            <option value="LGA1700">Intel LGA1700</option>
+                            <option value="AM4">AMD AM4</option>
+                            <option value="AM5">AMD AM5</option>
+                        </select>
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'CPU'}" th:data-price="${comp.price}" th:data-socket="${comp.socket}">
+                                <div class="card h-100 shadow-sm border-primary">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-primary">CPU</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-primary ps-2">
+                                            <li><span class="text-muted">Сокет:</span> <span class="fw-medium text-dark" th:text="${comp.socket}"></span></li>
+                                            <li><span class="text-muted">Ядра:</span> <span class="fw-medium text-dark" th:text="${comp.cores}"></span></li>
+                                            <li><span class="text-muted">Тепловыделение:</span> <span class="fw-medium text-dark" th:text="${comp.tdp + ' Вт'}"></span></li>
+                                            <li><span class="text-muted">Поддержка ОЗУ:</span> <span class="fw-medium text-dark" th:text="${comp.ramTypeSupport}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-primary w-100" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="mobo" role="tabpanel">
+                    <div class="d-flex justify-content-end mb-3 mt-2">
+                        <select class="form-select w-auto shadow-sm" onchange="filterComponents('mobo', 'data-socket', this.value)">
+                            <option value="all">Все сокеты</option>
+                            <option value="LGA1700">Intel LGA1700</option>
+                            <option value="AM4">AMD AM4</option>
+                            <option value="AM5">AMD AM5</option>
+                        </select>
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'MOTHERBOARD'}" th:data-price="${comp.price}" th:data-socket="${comp.socket}">
+
+                                <div class="card h-100 shadow-sm border-danger">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-danger">Материнка</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-danger ps-2">
+                                            <li><span class="text-muted">Сокет:</span> <span class="fw-medium text-dark" th:text="${comp.socket}"></span></li>
+                                            <li><span class="text-muted">Чипсет:</span> <span class="fw-medium text-dark" th:text="${comp.chipset}"></span></li>
+                                            <li><span class="text-muted">Тип памяти:</span> <span class="fw-medium text-dark" th:text="${comp.ramType}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-danger w-100" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="gpu" role="tabpanel">
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'GPU'}" th:data-price="${comp.price}">
+                                <div class="card h-100 shadow-sm border-success">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-success">Видеокарта</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-success ps-2">
+                                            <li><span class="text-muted">Объем памяти:</span> <span class="fw-medium text-dark" th:text="${comp.videoMemory + ' ГБ'}"></span></li>
+                                            <li><span class="text-muted">Рекомендованный БП:</span> <span class="fw-medium text-dark" th:text="${comp.recommendedPower + ' Вт'}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-success w-100" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="ram" role="tabpanel">
+                    <div class="d-flex justify-content-end mb-3 mt-2">
+                        <select class="form-select w-auto shadow-sm" onchange="filterComponents('ram', 'data-ram-type', this.value)">
+                            <option value="all">Все типы</option>
+                            <option value="DDR3">DDR3</option>
+                            <option value="DDR4">DDR4</option>
+                            <option value="DDR5">DDR5</option>
+                        </select>
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'RAM'}" th:data-price="${comp.price}" th:data-ram-type="${comp.ramType}">
+                                <div class="card h-100 shadow-sm border-info">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-info text-dark">ОЗУ</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-info ps-2">
+                                            <li><span class="text-muted">Тип памяти:</span> <span class="fw-medium text-dark" th:text="${comp.ramType}"></span></li>
+                                            <li><span class="text-muted">Объем:</span> <span class="fw-medium text-dark" th:text="${comp.capacityGb + ' ГБ'}"></span></li>
+                                            <li><span class="text-muted">Частота:</span> <span class="fw-medium text-dark" th:text="${comp.frequencyMhz + ' МГц'}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-info w-100 text-dark" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="cooler" role="tabpanel">
+                    <div class="d-flex justify-content-end mb-3 mt-2">
+                        <select class="form-select w-auto shadow-sm" onchange="filterComponents('cooler', 'data-cooling-type', this.value)">
+                            <option value="all">Все типы</option>
+                            <option value="ВОЗДУШНОЕ">Воздушное</option>
+                            <option value="ВОДЯНОЕ">Водяное (СЖО)</option>
+                        </select>
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'COOLER'}" th:data-price="${comp.price}" th:data-cooling-type="${comp.coolingType}">
+                                <div class="card h-100 shadow-sm border-secondary">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-secondary text-white">Охлаждение</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-secondary ps-2">
+                                            <li><span class="text-muted">Тип системы:</span> <span class="fw-medium text-dark" th:text="${comp.coolingType}"></span></li>
+                                            <li><span class="text-muted">Рассеиваемая мощность:</span> <span class="fw-medium text-dark" th:text="${comp.maxTdp + ' Вт'}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-secondary w-100" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="storage" role="tabpanel">
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'STORAGE'}" th:data-price="${comp.price}">
+                                <div class="card h-100 shadow-sm border-dark">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-dark">Накопитель</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-dark ps-2">
+                                            <li><span class="text-muted">Тип накопителя:</span> <span class="fw-medium text-dark" th:text="${comp.storageType}"></span></li>
+                                            <li><span class="text-muted">Емкость:</span> <span class="fw-medium text-dark" th:text="${comp.capacityGb >= 1000 ? (comp.capacityGb / 1000) + ' ТБ' : comp.capacityGb + ' ГБ'}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-dark w-100" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="psu" role="tabpanel">
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'PSU'}" th:data-price="${comp.price}">
+                                <div class="card h-100 shadow-sm border-warning">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-warning text-dark">Блок питания</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-warning ps-2">
+                                            <li><span class="text-muted">Мощность:</span> <span class="fw-medium text-dark" th:text="${comp.wattage + ' Вт'}"></span></li>
+                                            <li><span class="text-muted">Сертификат:</span> <span class="fw-medium text-dark" th:text="${comp.certificate}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-warning w-100 text-dark" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="case" role="tabpanel">
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mt-2">
+                        <th:block th:each="comp : ${components}">
+                            <div class="col component-item" th:if="${comp.type == 'CASE'}" th:data-price="${comp.price}">
+                                <div class="card h-100 shadow-sm border-danger">
+
+                                    <img th:src="${comp.imageUrl}"
+                                         class="card-img-top border-bottom bg-white"
+                                         style="object-fit: contain; height: 220px; padding: 10px; width: 100%;"
+                                         alt="Фото детали">
+
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="badge bg-danger">Корпус</span>
+                                            <span class="text-muted small" th:text="${comp.brand}">Бренд</span>
+                                        </div>
+                                        <h5 class="card-title fw-bold" th:text="${comp.name}">Название</h5>
+                                        <h6 class="card-subtitle mb-3 text-success fw-bold fs-5" th:text="${comp.price + ' ₽'}">Цена</h6>
+
+                                        <ul class="list-unstyled small mb-0 border-start border-2 border-danger ps-2">
+                                            <li><span class="text-muted">Форм-фактор:</span> <span class="fw-medium text-dark" th:text="${comp.formFactor}"></span></li>
+                                            <li><span class="text-muted">Макс. длина карты:</span> <span class="fw-medium text-dark" th:text="${comp.maxGpuLengthMm + ' мм'}"></span></li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0">
+                                        <button class="btn btn-outline-danger w-100" th:data-id="${comp.id}" th:data-type="${comp.type}" th:data-name="${comp.name}" onclick="addToBuild(this)">+ В сборку</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Текущая сборка</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/cpu.png" alt="CPU" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>CPU:</strong> <span id="selected-cpu" class="text-muted">Не выбран</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-cpu" onclick="removeFromBuild('CPU')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/motherboard.png" alt="M/B" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>M/B:</strong> <span id="selected-mobo" class="text-muted">Не выбрана</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-mobo" onclick="removeFromBuild('MOTHERBOARD')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/vcard.png" alt="GPU" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>GPU:</strong> <span id="selected-gpu" class="text-muted">Не выбрана</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-gpu" onclick="removeFromBuild('GPU')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/ram.png" alt="RAM" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>RAM:</strong> <span id="selected-ram" class="text-muted">Не выбрана</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-ram" onclick="removeFromBuild('RAM')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/cooler.png" alt="Cooler" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>Охлад:</strong> <span id="selected-cooler" class="text-muted">Не выбрано</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-cooler" onclick="removeFromBuild('COOLER')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/ssd.png" alt="SSD" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>SSD:</strong> <span id="selected-storage" class="text-muted">Не выбран</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-storage" onclick="removeFromBuild('STORAGE')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/powre.png" alt="PSU" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>БП:</strong> <span id="selected-psu" class="text-muted">Не выбран</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-psu" onclick="removeFromBuild('PSU')">×</button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center text-truncate pe-2">
+                            <img src="/images/icons/case.png" alt="Case" style="width: 24px; height: 24px; object-fit: contain;" class="me-2 flex-shrink-0">
+                            <span class="text-truncate"><strong>Корпус:</strong> <span id="selected-case" class="text-muted">Не выбран</span></span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger d-none py-0 px-2 fw-bold flex-shrink-0" id="remove-case" onclick="removeFromBuild('CASE')">×</button>
+                    </div>
+                    <hr>
+                    <div id="compatibility-alert" class="alert alert-secondary" role="alert">
+                        Соберите основу (CPU + M/B) для проверки совместимости.
+                    </div>
+
+                    <div id="save-build-block" style="display: none; margin-top: 15px;">
+                        <input type="text" id="build-name" class="form-control mb-2" placeholder="Название сборки">
+
+                        <button sec:authorize="isAuthenticated()" class="btn btn-success w-100" onclick="saveBuild()">Сохранить в профиль</button>
+
+                        <button sec:authorize="isAnonymous()" class="btn btn-primary w-100" onclick="showAuthWarning()">Сохранить сборку</button>
+                    </div>
+
+                    <div id="auth-warning-block" class="alert alert-info mt-3 mb-0 d-none shadow-sm" style="border-radius: 10px;">
+                        <strong>Ой!</strong><br> Чтобы сохранить сборку, нужен аккаунт.<br><br>
+                        <div class="d-flex gap-2">
+                            <a href="/login" class="btn btn-sm btn-primary w-100" onclick="backupBuild()">Войти</a>
+                            <a href="/register" class="btn btn-sm btn-outline-primary w-100" onclick="backupBuild()">Создать</a>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted">Не переживай, сборка не пропадет!</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAuthWarning() {
+        document.getElementById('auth-warning-block').classList.remove('d-none');
+    }
+
+    function backupBuild() {
+        localStorage.setItem('pendingBuild', JSON.stringify(currentBuild));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('pendingBuild');
+        if (saved) {
+            const parsedBuild = JSON.parse(saved);
+
+            for (let key in parsedBuild) {
+                let id = parsedBuild[key];
+                if (id) {
+                    let btn = document.querySelector(`button[data-id="${id}"]`);
+                    if (btn) {
+                        addToBuild(btn);
+                    }
+                }
+            }
+
+            localStorage.removeItem('pendingBuild');
+
+            const welcomeSection = document.getElementById('welcome-section');
+            if (welcomeSection) welcomeSection.classList.add('d-none');
+
+            const catalogContainer = document.getElementById('catalog-container');
+            if (catalogContainer) catalogContainer.classList.remove('d-none');
+        }
+    });
+
+    let currentBuild = {
+        cpuId: null, motherboardId: null, gpuId: null,
+        ramId: null, coolerId: null, storageId: null,
+        psuId: null, caseId: null
+    };
+
+    const typeToRemoveBtnMap = {
+        'CPU': 'remove-cpu', 'MOTHERBOARD': 'remove-mobo',
+        'GPU': 'remove-gpu', 'RAM': 'remove-ram',
+        'COOLER': 'remove-cooler', 'STORAGE': 'remove-storage',
+        'PSU': 'remove-psu', 'CASE': 'remove-case'
+    };
+
+    function addToBuild(buttonElement) {
+        const id = buttonElement.getAttribute('data-id');
+        const type = buttonElement.getAttribute('data-type');
+        const name = buttonElement.getAttribute('data-name');
+
+        const typeToIdMap = {
+            'CPU': 'selected-cpu', 'MOTHERBOARD': 'selected-mobo',
+            'GPU': 'selected-gpu', 'RAM': 'selected-ram',
+            'COOLER': 'selected-cooler', 'STORAGE': 'selected-storage',
+            'PSU': 'selected-psu', 'CASE': 'selected-case'
+        };
+
+        const targetElementId = typeToIdMap[type];
+        if (targetElementId) {
+            document.getElementById(targetElementId).innerText = name;
+            document.getElementById(targetElementId).className = "text-primary fw-bold";
+
+            document.getElementById(typeToRemoveBtnMap[type]).classList.remove('d-none');
+
+            if (type === 'CPU') currentBuild.cpuId = id;
+            if (type === 'MOTHERBOARD') currentBuild.motherboardId = id;
+            if (type === 'GPU') currentBuild.gpuId = id;
+            if (type === 'RAM') currentBuild.ramId = id;
+            if (type === 'COOLER') currentBuild.coolerId = id;
+            if (type === 'STORAGE') currentBuild.storageId = id;
+            if (type === 'PSU') currentBuild.psuId = id;
+            if (type === 'CASE') currentBuild.caseId = id;
+        }
+        checkCompatibility();
+    }
+
+    function removeFromBuild(type) {
+        const typeToIdMap = {
+            'CPU': 'selected-cpu', 'MOTHERBOARD': 'selected-mobo',
+            'GPU': 'selected-gpu', 'RAM': 'selected-ram',
+            'COOLER': 'selected-cooler', 'STORAGE': 'selected-storage',
+            'PSU': 'selected-psu', 'CASE': 'selected-case'
+        };
+
+        if (type === 'CPU') currentBuild.cpuId = null;
+        if (type === 'MOTHERBOARD') currentBuild.motherboardId = null;
+        if (type === 'GPU') currentBuild.gpuId = null;
+        if (type === 'RAM') currentBuild.ramId = null;
+        if (type === 'COOLER') currentBuild.coolerId = null;
+        if (type === 'STORAGE') currentBuild.storageId = null;
+        if (type === 'PSU') currentBuild.psuId = null;
+        if (type === 'CASE') currentBuild.caseId = null;
+
+        const targetElementId = typeToIdMap[type];
+        document.getElementById(targetElementId).innerText = "Не выбран";
+        document.getElementById(targetElementId).className = "text-muted";
+
+        document.getElementById(typeToRemoveBtnMap[type]).classList.add('d-none');
+
+        checkCompatibility();
+    }
+
+    async function checkCompatibility() {
+        const alertBox = document.getElementById('compatibility-alert');
+        const saveBlock = document.getElementById('save-build-block');
+
+        if (!currentBuild.cpuId || !currentBuild.motherboardId) {
+            alertBox.className = "alert alert-secondary";
+            alertBox.innerText = "Соберите основу (CPU + M/B) для проверки совместимости.";
+            saveBlock.style.display = 'none';
+            return;
+        }
+
+        alertBox.className = "alert alert-warning";
+        alertBox.innerText = "Анализ совместимости...";
+
+        try {
+            const response = await fetch('/api/compatibility/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentBuild)
+            });
+
+            const report = await response.json();
+
+            if (report.valid) {
+                alertBox.className = "alert alert-success";
+                alertBox.innerText = "Все детали идеально совместимы!";
+                saveBlock.style.display = 'block';
+            } else {
+                alertBox.className = "alert alert-danger";
+                alertBox.innerHTML = report.errorMessages.join("<br>");
+                saveBlock.style.display = 'none';
+            }
+        } catch (error) {
+            alertBox.className = "alert alert-danger";
+            alertBox.innerText = "Ошибка сервера при проверке.";
+        }
+    }
+
+    function sortCatalog() {
+        const sortValue = document.getElementById('price-sort').value;
+        if (sortValue === 'none') return;
+
+        const gridContainers = document.querySelectorAll('.tab-pane .row');
+
+        gridContainers.forEach(container => {
+            let cards = Array.from(container.querySelectorAll('.component-item'));
+
+            cards.sort((a, b) => {
+                let priceA = parseFloat(a.getAttribute('data-price'));
+                let priceB = parseFloat(b.getAttribute('data-price'));
+
+                if (sortValue === 'asc') return priceA - priceB;
+                if (sortValue === 'desc') return priceB - priceA;
+            });
+
+            container.innerHTML = '';
+            cards.forEach(card => container.appendChild(card));
+        });
+    }
+
+    async function saveBuild() {
+        const buildNameInput = document.getElementById('build-name').value;
+
+        if (!buildNameInput.trim()) {
+            alert("Пожалуйста, введите название сборки!");
+            return;
+        }
+
+        const payload = {
+            name: buildNameInput,
+            cpuId: currentBuild.cpuId,
+            motherboardId: currentBuild.motherboardId,
+            gpuId: currentBuild.gpuId,
+            ramId: currentBuild.ramId,
+            coolerId: currentBuild.coolerId,
+            storageId: currentBuild.storageId,
+            psuId: currentBuild.psuId,
+            caseId: currentBuild.caseId
+        };
+
+        console.log("Отправляем на сервер:", payload);
+
+        try {
+            const response = await fetch('/api/builds/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Ура! Сборка успешно сохранена!");
+                document.getElementById('build-name').value = "";
+                document.getElementById('save-build-block').style.display = 'none';
+            } else {
+                alert("Ошибка сервера при сохранении.");
+            }
+        } catch (error) {
+            alert("Ошибка сети.");
+        }
+    }
+
+    function filterComponents(tabId, dataAttr, value) {
+        const container = document.getElementById(tabId);
+        const cards = container.querySelectorAll('.component-item');
+
+        cards.forEach(card => {
+            if (value === 'all' || card.getAttribute(dataAttr) === value) {
+                card.classList.remove('d-none');
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

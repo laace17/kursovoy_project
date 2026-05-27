@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная | PC Builder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/">PC Builder</a>
+    </div>
+</nav>
+
+<div class="d-flex align-items-center justify-content-center" style="height: 80vh;">
+    <div class="bg-white p-5 rounded-4 shadow-sm text-center" style="max-width: 700px;">
+        <h1 class="fw-bold mb-3">Собери ПК своей мечты!</h1>
+        <p class="text-muted mb-4 fs-5">
+            Сохраняй свои конфигурации, проверяй совместимость деталей и управляй сборками в личном кабинете.
+        </p>
+
+        <div sec:authorize="isAnonymous()" class="d-flex justify-content-center gap-3">
+            <a href="/login" class="btn btn-primary px-4 py-2 fw-medium shadow-sm">Войти в аккаунт</a>
+            <a href="/register" class="btn btn-outline-primary px-4 py-2 fw-medium shadow-sm">Регистрация</a>
+            <a href="/catalog" class="btn btn-light border text-muted px-4 py-2 fw-medium shadow-sm">Перейти в каталог</a>
+        </div>
+
+        <div sec:authorize="isAuthenticated()" class="d-flex justify-content-center gap-3">
+            <a href="/catalog" class="btn btn-success px-4 py-2 fw-medium shadow-sm">Перейти в Конфигуратор</a>
+            <a href="/builds" class="btn btn-outline-success px-4 py-2 fw-medium shadow-sm">Мои сборки</a>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>
